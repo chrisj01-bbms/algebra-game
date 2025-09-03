@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algebra Vocabulary Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f4f8, #c8d9e8);
+            color: #334155;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #475569;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .flashcard-container {
+            width: 100%;
+            perspective: 1000px; /* Gives the 3D effect */
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+
+        .flashcard {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 12px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .flashcard-front {
+            background-color: #e2e8f0;
+            color: #334155;
+        }
+
+        .flashcard-back {
+            background-color: #64748b;
+            color: #fff;
+            transform: rotateY(180deg);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 700;
+            background-color: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-container {
+            margin-top: 20px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .progress-indicator {
+            margin-top: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+            p {
+                font-size: 1rem;
+            }
+            .flashcard-face {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="game-container">
+        <h1>Algebra Vocabulary Flashcards</h1>
+        <p>Click the card to flip between the word and its definition. Use the buttons below to move to the next or previous card.</p>
+        
+        <div id="start-screen">
+            <button id="start-btn" class="btn">Start Game</button>
+        </div>
+
+        <div id="game-board" class="hidden">
+            <div class="flashcard-container">
+                <div id="flashcard" class="flashcard">
+                    <div id="flashcard-front" class="flashcard-face flashcard-front"></div>
+                    <div id="flashcard-back" class="flashcard-face flashcard-back"></div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button id="prev-btn" class="btn">Previous</button>
+                <button id="next-btn" class="btn">Next</button>
+            </div>
+            
+            <div id="progress" class="progress-indicator"></div>
+        </div>
+
+        <div id="end-screen" class="hidden btn-container">
+            <p class="message" style="font-size: 1.5rem; color: #10b981;">You've reviewed all the flashcards!</p>
+            <button id="restart-btn" class="btn">Review Again</button>
+        </div>
+    </div>
+
+    <script>
+        const startScreen = document.getElementById('start-screen');
+        const gameBoard = document.getElementById('game-board');
+        const endScreen = document.getElementById('end-screen');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const flashcard = document.getElementById('flashcard');
+        const flashcardFront = document.getElementById('flashcard-front');
+        const flashcardBack = document.getElementById('flashcard-back');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const progressIndicator = document.getElementById('progress');
+
+        const vocabData = [
+            { word: 'variable', definition: 'A symbol, usually a letter, representing a value that can change.' },
+            { word: 'constant', definition: 'A number or a value that does not change.' },
+            { word: 'equation', definition: 'A mathematical statement that two expressions are equal, shown by an equals sign (=).' },
+            { word: 'expression', definition: 'A mathematical phrase that contains numbers, variables, and operations, but no equals sign.' },
+            { word: 'solution', definition: 'The value of the variable that makes an equation true.' },
+            { word: 'constraint', definition: 'A condition or restriction that must be met.' },
+            { word: 'model', definition: 'A mathematical representation of a real-world situation.' },
+            { word: 'vary', definition: 'To change or be subject to change.' }
+        ];
+
+        let shuffledCards = [];
+        let currentIndex = 0;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function displayCard() {
+            if (currentIndex >= 0 && currentIndex < shuffledCards.length) {
+                const currentCard = shuffledCards[currentIndex];
+                flashcardFront.textContent = currentCard.word;
+                flashcardBack.textContent = currentCard.definition;
+                updateControls();
+                updateProgress();
+            }
+        }
+        
+        function updateControls() {
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false; // Next is only disabled at the very end
+        }
+        
+        function updateProgress() {
+            progressIndicator.textContent = `${currentIndex + 1} of ${shuffledCards.length}`;
+        }
+
+        function startGame() {
+            startScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            gameBoard.classList.remove('hidden');
+            shuffledCards = shuffle([...vocabData]);
+            currentIndex = 0;
+            flashcard.classList.remove('flipped');
+            displayCard();
+        }
+
+        function navigateCards(direction) {
+            flashcard.classList.remove('flipped');
+            if (direction === 'next') {
+                currentIndex++;
+                if (currentIndex >= shuffledCards.length) {
+                    endGame();
+                    return;
+                }
+            } else if (direction === 'prev') {
+                currentIndex--;
+            }
+            displayCard();
+        }
+        
+        function endGame() {
+            gameBoard.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+        }
+
+        flashcard.addEventListener('click', () => {
+            flashcard.classList.toggle('flipped');
+        });
+        
+        prevBtn.addEventListener('click', () => navigateCards('prev'));
+        nextBtn.addEventListener('click', () => navigateCards('next'));
+        
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+
+        window.onload = startGame;
+    </script>
+</body>
+</html>
